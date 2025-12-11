@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Ignora la cartella dei dati del DB locale
+/data
+*.mv.db
+*.trace.db
