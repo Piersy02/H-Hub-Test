@@ -1,6 +1,7 @@
-package com.ids.hhub.Service;
-import com.ids.hhub.dto.LoginDto;
-import com.ids.hhub.dto.RegisterUserDto;
+package com.ids.hhub.service;
+
+import com.ids.hhub.dto.LoginRequestDto;
+import com.ids.hhub.dto.RegisterRequestDto;
 import com.ids.hhub.model.User;
 import com.ids.hhub.model.PlatformRole;
 import com.ids.hhub.repository.UserRepository;
@@ -8,22 +9,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 public class AuthService {
     @Autowired private UserRepository userRepo;
     @Autowired private PasswordEncoder passwordEncoder;
 
     // --- REGISTRAZIONE ---
-    public User register(RegisterUserDto dto) {
+    public User register(RegisterRequestDto dto) {
         if (userRepo.existsByEmail(dto.getEmail())) {
             throw new RuntimeException("Email già registrata!");
         }
 
         User newUser = new User();
-        newUser.setName(dto.getNome());
-        newUser.setSurname(dto.getCognome());
+        newUser.setName(dto.getName());
+        newUser.setSurname(dto.getSurname());
         newUser.setEmail(dto.getEmail());
 
         // Cifriamo la password prima di salvarla
@@ -36,7 +35,7 @@ public class AuthService {
     }
 
     // --- LOGIN (Semplificato per API) ---
-    public User login(LoginDto dto) {
+    public User login(LoginRequestDto dto) {
         // 1. Cerca l'utente
         User user = userRepo.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new RuntimeException("Utente non trovato"));
