@@ -22,8 +22,8 @@ public class AuthService {
         }
 
         User newUser = new User();
-        newUser.setName(dto.getName());
-        newUser.setSurname(dto.getSurname());
+        newUser.setName(dto.getNome());
+        newUser.setSurname(dto.getCognome());
         newUser.setEmail(dto.getEmail());
 
         // Cifriamo la password prima di salvarla
@@ -38,7 +38,7 @@ public class AuthService {
     // --- LOGIN (Semplificato per API) ---
     public User login(LoginDto dto) {
         // 1. Cerca l'utente
-        User user = UserRepository.findByEmail(dto.getEmail())
+        User user = userRepo.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new RuntimeException("Utente non trovato"));
 
         // 2. Confronta la password inviata con quella cifrata nel DB
