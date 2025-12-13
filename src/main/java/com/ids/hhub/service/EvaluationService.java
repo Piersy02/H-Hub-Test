@@ -7,18 +7,15 @@ import com.ids.hhub.model.User;
 import com.ids.hhub.repository.StaffAssignmentRepository;
 import com.ids.hhub.repository.SubmissionRepository;
 import com.ids.hhub.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class EvaluationService {
 
-    @Autowired
-    private final UserRepository userRepo;
-    private final SubmissionRepository submissionRepo;
-    private final StaffAssignmentRepository staffRepo;
+    @Autowired private UserRepository userRepo;
+    @Autowired private SubmissionRepository submissionRepo;
+    @Autowired private StaffAssignmentRepository staffRepo;
 
     public void evaluateSubmission(Long submissionId, int score, String comment, String judgeEmail) {
         // 1. Recupera dati
