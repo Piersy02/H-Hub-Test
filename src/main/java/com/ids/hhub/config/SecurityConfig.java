@@ -22,6 +22,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/hackathons").permitAll()   // Lista hackathon pubblica
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger aperto
                         .requestMatchers("/h2-console/**").permitAll()  // Lascia passare liberamente la console H2
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated()   // 2. Tutto il resto richiede autenticazione
                 )
 
