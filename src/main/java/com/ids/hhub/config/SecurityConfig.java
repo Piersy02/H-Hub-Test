@@ -1,4 +1,4 @@
-package com.ids.hhub.Config;
+package com.ids.hhub.config;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;

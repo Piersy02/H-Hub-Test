@@ -1,4 +1,4 @@
-package com.ids.hhub.Config;
+package com.ids.hhub.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

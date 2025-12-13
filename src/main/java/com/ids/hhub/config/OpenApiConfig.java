@@ -1,4 +1,4 @@
-package com.ids.hhub.Config;
+package com.ids.hhub.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
