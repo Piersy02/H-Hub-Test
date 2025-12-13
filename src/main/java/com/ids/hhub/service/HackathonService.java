@@ -47,25 +47,35 @@ public class HackathonService {
     // --- ADD STAFF ---
     @Transactional
     public void addStaffMember(Long hackathonId, AddStaffDto dto, String requesterEmail) {
-        // 1. Trova l'utente che sta facendo la richiesta (deve essere l'organizzatore)
-        User requester = userRepo.findByEmail(requesterEmail).orElseThrow();
+        // 1. Chi sta facendo la richiesta?
+        User requester = userRepo.findByEmail(requesterEmail)
+                .orElseThrow(() -> new RuntimeException("Utente richiedente non trovato"));
 
-        // 2. Verifica che il richiedente sia ORGANIZER per QUESTO hackathon
-        boolean isOrganizer = staffRepo.existsByUserIdAndHackathonIdAndRole(
+        // 2. Recupera l'Hackathon
+        Hackathon hackathon = hackathonRepo.findById(hackathonId)
+                .orElseThrow(() -> new RuntimeException("Hackathon non trovato"));
+
+        // 3. CONTROLLO PERMESSI (Admin O Organizzatore dell'evento)
+        boolean isAdmin = requester.getPlatformRole() == PlatformRole.ADMIN;
+
+        boolean isOrganizerOfThisEvent = staffRepo.existsByUserIdAndHackathonIdAndRole(
                 requester.getId(), hackathonId, StaffRole.ORGANIZER);
 
-        if (!isOrganizer) {
-            throw new RuntimeException("Solo l'organizzatore può aggiungere staff!");
+        if (!isAdmin && !isOrganizerOfThisEvent) {
+            throw new SecurityException("NON AUTORIZZATO: Solo l'Admin o l'Organizzatore possono gestire lo staff.");
         }
 
-        // 3. Trova l'utente da aggiungere come staff
-        User newStaffUser = userRepo.findById(dto.getUserId())
-                .orElseThrow(() -> new RuntimeException("Utente da aggiungere non trovato"));
+        // 4. Recupera l'utente da promuovere
+        User targetUser = userRepo.findById(dto.getUserId())
+                .orElseThrow(() -> new RuntimeException("Utente target non trovato"));
 
-        Hackathon hackathon = getHackathonById(hackathonId);
+        // 5. Evita duplicati (Se è già staff, non aggiungerlo due volte)
+        if (staffRepo.existsByUserIdAndHackathonIdAndRole(targetUser.getId(), hackathonId, dto.getRole())) {
+            throw new RuntimeException("L'utente ha già questo ruolo in questo hackathon!");
+        }
 
-        // 4. Salva l'assegnazione
-        StaffAssignment assignment = new StaffAssignment(newStaffUser, hackathon, dto.getRole());
+        // 6. Salva l'assegnazione
+        StaffAssignment assignment = new StaffAssignment(targetUser, hackathon, dto.getRole());
         staffRepo.save(assignment);
     }
 

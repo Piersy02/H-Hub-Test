@@ -50,7 +50,7 @@ public class HackathonController {
     public ResponseEntity<String> addStaff(
             @PathVariable Long id,
             @RequestBody AddStaffDto dto,
-            Authentication authentication
+            Authentication authentication   // Spring Security ci dà chi è loggato
     ) {
         String emailRichiedente = authentication.getName();
 
