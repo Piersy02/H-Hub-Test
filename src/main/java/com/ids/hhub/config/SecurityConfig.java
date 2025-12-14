@@ -3,6 +3,7 @@ package com.ids.hhub.config;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -61,6 +62,10 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                        // Solo EVENT_CREATOR e ADMIN possono fare POST su /api/hackathons
+                        .requestMatchers(HttpMethod.POST, "/api/hackathons")
+                        .hasAnyAuthority("EVENT_CREATOR", "ADMIN")
+
                         .anyRequest().authenticated()
                 )
 

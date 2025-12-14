@@ -13,38 +13,51 @@ import java.util.List;
 @Service
 public class HackathonService {
 
-
     @Autowired private HackathonRepository hackathonRepo;
     @Autowired private UserRepository userRepo;
     @Autowired private StaffAssignmentRepository staffRepo;
 
-    // --- CREATE (Aggiornato con email) ---
+    // --- CREATE HACKATHON ---
     @Transactional
     public Hackathon createHackathon(CreateHackathonDto dto, String organizerEmail) {
+        // 1. Recupera l'utente che vuole creare l'evento
         User organizer = userRepo.findByEmail(organizerEmail)
                 .orElseThrow(() -> new RuntimeException("Utente loggato non trovato"));
 
-        // Qui potresti controllare: organizer.getPlatformRole() == PlatformRole.ADMIN?
-        // O permettere a tutti gli utenti registrati di creare eventi.
+        // 2. CONTROLLO RUOLO DI PIATTAFORMA
+        // Solo chi è EVENT_CREATOR (o ADMIN) può generare nuovi eventi.
+        // Nota: Ho corretto la variabile da 'creator' a 'organizer'
+        if (organizer.getPlatformRole() != PlatformRole.EVENT_CREATOR
+                && organizer.getPlatformRole() != PlatformRole.ADMIN) {
+            throw new SecurityException("Non hai i permessi per creare un Hackathon. Richiedi l'upgrade a Event Creator.");
+        }
 
+        // 3. Crea l'entità Hackathon
         Hackathon h = new Hackathon();
         h.setName(dto.getName());
         h.setDescription(dto.getDescription());
+        h.setRules(dto.getRules());
+        h.setRegistrationDeadline(dto.getRegistrationDeadline());
+        h.setMaxTeamSize(dto.getMaxTeamSize());
         h.setStartDate(dto.getStartDate());
         h.setEndDate(dto.getEndDate());
         h.setPrizeAmount(dto.getPrizeAmount());
+
+        // Imposta lo stato iniziale
         h.setState(HackathonState.REGISTRATION_OPEN);
 
+        // Salva per generare l'ID
         h = hackathonRepo.save(h);
 
-        // Assegna ruolo ORGANIZER
+        // 4. ASSEGNAZIONE RUOLO CONTESTUALE
+        // L'utente diventa automaticamente ORGANIZER di QUESTO specifico hackathon
         StaffAssignment assignment = new StaffAssignment(organizer, h, StaffRole.ORGANIZER);
         staffRepo.save(assignment);
 
         return h;
     }
 
-    // --- ADD STAFF ---
+    // --- ADD STAFF MEMBER ---
     @Transactional
     public void addStaffMember(Long hackathonId, AddStaffDto dto, String requesterEmail) {
         // 1. Chi sta facendo la richiesta?
@@ -55,9 +68,10 @@ public class HackathonService {
         Hackathon hackathon = hackathonRepo.findById(hackathonId)
                 .orElseThrow(() -> new RuntimeException("Hackathon non trovato"));
 
-        // 3. CONTROLLO PERMESSI (Admin O Organizzatore dell'evento)
+        // 3. CONTROLLO PERMESSI (Admin Globale O Organizzatore dell'evento)
         boolean isAdmin = requester.getPlatformRole() == PlatformRole.ADMIN;
 
+        // Verifica se il richiedente è ORGANIZER per QUESTO specifico hackathon
         boolean isOrganizerOfThisEvent = staffRepo.existsByUserIdAndHackathonIdAndRole(
                 requester.getId(), hackathonId, StaffRole.ORGANIZER);
 
@@ -65,16 +79,16 @@ public class HackathonService {
             throw new SecurityException("NON AUTORIZZATO: Solo l'Admin o l'Organizzatore possono gestire lo staff.");
         }
 
-        // 4. Recupera l'utente da promuovere
+        // 4. Recupera l'utente da promuovere a staff
         User targetUser = userRepo.findById(dto.getUserId())
                 .orElseThrow(() -> new RuntimeException("Utente target non trovato"));
 
-        // 5. Evita duplicati (Se è già staff, non aggiungerlo due volte)
+        // 5. Evita duplicati (Se è già staff con quel ruolo, errore)
         if (staffRepo.existsByUserIdAndHackathonIdAndRole(targetUser.getId(), hackathonId, dto.getRole())) {
             throw new RuntimeException("L'utente ha già questo ruolo in questo hackathon!");
         }
 
-        // 6. Salva l'assegnazione
+        // 6. Salva la nuova assegnazione
         StaffAssignment assignment = new StaffAssignment(targetUser, hackathon, dto.getRole());
         staffRepo.save(assignment);
     }
@@ -85,6 +99,7 @@ public class HackathonService {
                 .orElseThrow(() -> new RuntimeException("Hackathon non trovato con ID: " + id));
     }
 
+    // --- GET ALL ---
     public List<Hackathon> getAllHackathons() {
         return hackathonRepo.findAll();
     }

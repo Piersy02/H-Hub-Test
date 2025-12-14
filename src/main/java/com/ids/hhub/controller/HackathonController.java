@@ -31,13 +31,13 @@ public class HackathonController {
         return ResponseEntity.ok(hackathonService.getHackathonById(id));
     }
 
-    // 3. CREAZIONE (Solo Utenti Loggati)
+    // 3. CREAZIONE (Solo Utenti Loggati che siano ADMIN o EVENT_CREATOR)
     @PostMapping
     public ResponseEntity<Hackathon> create(
             @RequestBody CreateHackathonDto dto,
             Authentication authentication // Spring Security inietta l'utente loggato qui
     ) {
-        // Recuperiamo l'email dell'utente loggato dal contesto di sicurezza
+        // 1. Prendi l'email dal token di login
         String emailOrganizer = authentication.getName();
 
         // Passiamo l'email al service invece dell'ID grezzo nel DTO
