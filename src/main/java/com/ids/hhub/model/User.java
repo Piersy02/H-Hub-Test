@@ -1,6 +1,7 @@
 package com.ids.hhub.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.ids.hhub.model.enums.PlatformRole;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;

@@ -1,6 +1,7 @@
 package com.ids.hhub.repository;
 
 import com.ids.hhub.model.*;
+import com.ids.hhub.model.enums.StaffRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

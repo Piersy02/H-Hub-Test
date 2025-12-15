@@ -1,7 +1,7 @@
 package com.ids.hhub.config;
 
 import com.ids.hhub.model.User;
-import com.ids.hhub.model.PlatformRole;
+import com.ids.hhub.model.enums.PlatformRole;
 import com.ids.hhub.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;

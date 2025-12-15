@@ -1,6 +1,6 @@
 package com.ids.hhub.service;
 
-import com.ids.hhub.model.PlatformRole;
+import com.ids.hhub.model.enums.PlatformRole;
 import com.ids.hhub.model.User;
 import com.ids.hhub.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;

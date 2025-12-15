@@ -1,6 +1,6 @@
 package com.ids.hhub.dto;
 
-import com.ids.hhub.model.PlatformRole;
+import com.ids.hhub.model.enums.PlatformRole;
 import lombok.Data;
 
 @Data

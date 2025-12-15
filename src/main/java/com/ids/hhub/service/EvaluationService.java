@@ -1,7 +1,6 @@
 package com.ids.hhub.service;
 
-import com.ids.hhub.model.StaffAssignment;
-import com.ids.hhub.model.StaffRole;
+import com.ids.hhub.model.enums.StaffRole;
 import com.ids.hhub.model.Submission;
 import com.ids.hhub.model.User;
 import com.ids.hhub.repository.StaffAssignmentRepository;

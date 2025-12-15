@@ -1,7 +1,7 @@
 package com.ids.hhub.repository;
 
 import com.ids.hhub.model.*;
-import com.ids.hhub.model.state.HackathonState;
+import com.ids.hhub.model.enums.HackathonStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;

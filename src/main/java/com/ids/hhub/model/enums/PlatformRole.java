@@ -1,4 +1,4 @@
-package com.ids.hhub.model;
+package com.ids.hhub.model.enums;
 
 public enum PlatformRole {
     USER,  // Utente normale

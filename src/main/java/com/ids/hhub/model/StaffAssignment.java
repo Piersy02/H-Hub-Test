@@ -1,5 +1,6 @@
 package com.ids.hhub.model;
 
+import com.ids.hhub.model.enums.StaffRole;
 import jakarta.persistence.*;
 import lombok.*;
 

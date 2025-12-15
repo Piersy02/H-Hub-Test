@@ -1,6 +1,6 @@
 package com.ids.hhub.dto;
 
-import com.ids.hhub.model.StaffRole;
+import com.ids.hhub.model.enums.StaffRole;
 import lombok.Data;
 
 @Data

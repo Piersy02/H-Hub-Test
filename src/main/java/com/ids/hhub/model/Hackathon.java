@@ -1,5 +1,6 @@
 package com.ids.hhub.model;
 
+import com.ids.hhub.model.enums.HackathonStatus;
 import com.ids.hhub.model.state.HackathonState;
 import jakarta.persistence.*;
 import lombok.*;
