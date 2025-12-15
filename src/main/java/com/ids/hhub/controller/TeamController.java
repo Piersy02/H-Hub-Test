@@ -1,8 +1,8 @@
 package com.ids.hhub.controller;
 
-import com.ids.hhub.dto.AddMemberDto;
 import com.ids.hhub.dto.CreateTeamDto;
 import com.ids.hhub.dto.RegisterTeamByNameDto;
+import com.ids.hhub.dto.inviteUserDto;
 import com.ids.hhub.model.Team;
 import com.ids.hhub.model.TeamInvitation;
 import com.ids.hhub.service.TeamService;
@@ -42,7 +42,7 @@ public class TeamController {
     @PostMapping("/{teamId}/invite")
     public ResponseEntity<String> inviteUser(
             @PathVariable Long teamId,
-            @RequestBody AddMemberDto dto, // Riutilizziamo il DTO con l'email
+            @RequestBody inviteUserDto dto,
             Authentication auth
     ) {
         teamService.sendInvitation(teamId, dto.getUserEmail(), auth.getName());
