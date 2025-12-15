@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class SubmissionDto {
-    private String projectUrl;
-    private String description;
+    private String projectUrl;  // Es. "https://github.com/my-repo"
+    private String description; // Es. "App per la gestione rifiuti"
 }
