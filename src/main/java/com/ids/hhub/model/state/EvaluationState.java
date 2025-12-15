@@ -11,10 +11,15 @@ public class EvaluationState implements HackathonState {
         throw new IllegalStateException("ERRORE: Le iscrizioni sono chiuse. I giudici stanno valutando i progetti.");
     }
 
-    // NOTA PER IL FUTURO (Iterazione 3):
-    // Qui aggiungeremo un metodo tipo:
-    // @Override
-    // public void submitEvaluation(...) {
-    //     // Qui sarà permesso!
-    // }
+    @Override
+    public void submitProject(Hackathon context, Team team) {
+        throw new IllegalStateException("Tempo scaduto! non è possibile sottoscrivere il progetto.");
+    }
+
+    @Override
+    public void evaluateProject(Hackathon context) {
+        // QUI NON FACCIO NULLA.
+        // Il fatto che non lanci eccezione significa "Permesso Accordato".
+    }
+
 }

@@ -10,4 +10,15 @@ public class RegistrationOpenState implements HackathonState {
         context.getTeams().add(team);
         System.out.println("Team " + team.getName() + " iscritto con successo!");
     }
+
+    @Override
+    public void submitProject(Hackathon context, Team team) {
+        throw new IllegalStateException("Troppo presto! L'Hackathon non è ancora iniziato.");
+    }
+
+    @Override
+    public void evaluateProject(Hackathon context) {
+        throw new IllegalStateException("ERRORE: Non è momento di votare!");
+    }
+
 }

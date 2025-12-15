@@ -37,6 +37,9 @@ public class Team {
     @OneToMany(mappedBy = "team", fetch = FetchType.EAGER)
     private List<User> members = new ArrayList<>();
 
+    @OneToOne(mappedBy = "team", cascade = CascadeType.ALL)
+    private Submission submission;
+
     // Costruttore per team "vuoto"
     public Team(String name, User leader) {
         this.name = name;
