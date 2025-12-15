@@ -1,5 +1,6 @@
 package com.ids.hhub.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -23,12 +24,13 @@ public class User {
     @Enumerated(EnumType.STRING)
     private PlatformRole platformRole = PlatformRole.USER;
 
-    // Un utente può appartenere a un solo team (vincolo del testo)
-    // Nota: Se il vincolo è "un solo team alla volta in assoluto", usiamo questo:
-    @OneToOne(mappedBy = "leader") // O ManyToOne se membro semplice
-    private Team currentTeam;
-
     // Lista dei ruoli staff (es. Giudice nell'Hackathon A, Mentore nel B)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<StaffAssignment> staffAssignments;
+
+    @ManyToOne // O @OneToOne se vuoi vincolo stretto, ma ManyToOne è più flessibile per storici futuri
+    @JoinColumn(name = "team_id")
+    @JsonIgnore // Importante: se stampo l'utente non voglio ristampare tutto il team
+    @ToString.Exclude
+    private Team team;
 }

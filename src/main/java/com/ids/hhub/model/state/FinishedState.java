@@ -1,0 +1,11 @@
+package com.ids.hhub.model.state;
+
+import com.ids.hhub.model.Hackathon;
+import com.ids.hhub.model.Team;
+
+public class FinishedState implements HackathonState {
+    @Override
+    public void registerTeam(Hackathon context, Team team) {
+        throw new IllegalStateException("ERRORE: Hackathon concluso. Non puoi iscriverti.");
+    }
+}

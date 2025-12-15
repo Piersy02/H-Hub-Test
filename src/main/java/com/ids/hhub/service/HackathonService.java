@@ -3,6 +3,7 @@ package com.ids.hhub.service;
 import com.ids.hhub.dto.AddStaffDto;
 import com.ids.hhub.dto.CreateHackathonDto;
 import com.ids.hhub.model.*;
+import com.ids.hhub.model.state.HackathonState;
 import com.ids.hhub.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,7 +45,7 @@ public class HackathonService {
         h.setPrizeAmount(dto.getPrizeAmount());
 
         // Imposta lo stato iniziale
-        h.setState(HackathonState.REGISTRATION_OPEN);
+        h.setStatus(HackathonStatus.REGISTRATION_OPEN);
 
         // Salva per generare l'ID
         h = hackathonRepo.save(h);
