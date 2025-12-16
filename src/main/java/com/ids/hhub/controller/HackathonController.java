@@ -1,6 +1,7 @@
 package com.ids.hhub.controller;
 
 import com.ids.hhub.dto.AddStaffDto;
+import com.ids.hhub.dto.ChangeStatusDto;
 import com.ids.hhub.dto.CreateHackathonDto;
 import com.ids.hhub.model.Hackathon;
 import com.ids.hhub.model.Team;
@@ -68,5 +69,16 @@ public class HackathonController {
     ) {
         Team winner = hackathonService.proclaimWinner(id, auth.getName());
         return ResponseEntity.ok("Hackathon concluso! Il vincitore è il team: " + winner.getName());
+    }
+
+    // PATCH /api/hackathons/{id}/status
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<String> changeStatus(
+            @PathVariable Long id,
+            @RequestBody ChangeStatusDto dto,
+            Authentication auth
+    ) {
+        hackathonService.changeHackathonStatus(id, dto.getNewStatus(), auth.getName());
+        return ResponseEntity.ok("Stato aggiornato con successo a " + dto.getNewStatus());
     }
 }

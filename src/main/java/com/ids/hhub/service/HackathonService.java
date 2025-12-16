@@ -163,4 +163,32 @@ public class HackathonService {
         return winner;
     }
 
+    @Transactional
+    public void changeHackathonStatus(Long hackathonId, HackathonStatus newStatus, String requesterEmail) {
+        // 1. Recupera Hackathon e Utente
+        Hackathon h = hackathonRepo.findById(hackathonId)
+                .orElseThrow(() -> new RuntimeException("Hackathon non trovato"));
+
+        User requester = userRepo.findByEmail(requesterEmail).orElseThrow();
+
+        // 2. Controllo Permessi: Sei l'Organizzatore o l'Admin?
+        boolean isOrganizer = staffRepo.existsByUserIdAndHackathonIdAndRole(
+                requester.getId(), h.getId(), StaffRole.ORGANIZER);
+        boolean isAdmin = requester.getPlatformRole() == PlatformRole.ADMIN;
+
+        if (!isOrganizer && !isAdmin) {
+            throw new SecurityException("Solo l'Organizzatore può cambiare lo stato dell'evento!");
+        }
+
+        // 3. (Opzionale) Validazione Transizione
+        // Qui potresti impedire salti illogici (es. da FINISHED a REGISTRATION_OPEN),
+        // ma è comodo poter fare rollback, quindi lasciamo libero.
+
+        // 4. Aggiorna lo stato
+        h.setStatus(newStatus);
+        hackathonRepo.save(h);
+
+        System.out.println("Stato Hackathon " + h.getId() + " cambiato in: " + newStatus);
+    }
+
 }
