@@ -7,6 +7,7 @@ import com.ids.hhub.model.enums.HackathonStatus;
 import com.ids.hhub.model.enums.PlatformRole;
 import com.ids.hhub.model.enums.StaffRole;
 import com.ids.hhub.repository.*;
+import com.ids.hhub.service.external.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ public class HackathonService {
     @Autowired private HackathonRepository hackathonRepo;
     @Autowired private UserRepository userRepo;
     @Autowired private StaffAssignmentRepository staffRepo;
+    @Autowired private PaymentService paymentService;
 
     // --- CREATE HACKATHON ---
     @Transactional
@@ -106,4 +108,59 @@ public class HackathonService {
     public List<Hackathon> getAllHackathons() {
         return hackathonRepo.findAll();
     }
+
+    @Transactional
+    public Team proclaimWinner(Long hackathonId, String organizerEmail) {
+        // 1. Recupera Hackathon e Organizzatore
+        Hackathon h = hackathonRepo.findById(hackathonId).orElseThrow();
+        User organizer = userRepo.findByEmail(organizerEmail).orElseThrow();
+
+        // 2. Controllo Permessi (Solo Organizzatore)
+        boolean isOrganizer = staffRepo.existsByUserIdAndHackathonIdAndRole(
+                organizer.getId(), h.getId(), StaffRole.ORGANIZER);
+        if (!isOrganizer) throw new SecurityException("Solo l'organizzatore può chiudere l'evento.");
+
+        // 3. Controllo Stato (Deve essere in Valutazione)
+        if (h.getStatus() != HackathonStatus.EVALUATION) {
+            throw new IllegalStateException("L'hackathon deve essere in fase di valutazione per chiudere.");
+        }
+
+        // 4. ALGORITMO CALCOLO VINCITORE
+        Team winner = null;
+        double maxScore = -1.0;
+
+        for (Team team : h.getTeams()) {
+            Submission sub = team.getSubmission();
+            if (sub != null && !sub.getEvaluations().isEmpty()) {
+                // Calcola media voti
+                double avg = sub.getEvaluations().stream()
+                        .mapToInt(Evaluation::getScore)
+                        .average()
+                        .orElse(0.0);
+
+                if (avg > maxScore) {
+                    maxScore = avg;
+                    winner = team;
+                }
+            }
+        }
+
+        if (winner == null) {
+            throw new RuntimeException("Nessun vincitore calcolabile (forse nessuna valutazione?)");
+        }
+
+        // 5. PAGAMENTO (Strategy Pattern)
+        boolean paid = paymentService.processPayment(winner.getLeader().getEmail(), h.getPrizeAmount());
+        if (!paid) {
+            throw new RuntimeException("Errore nel pagamento del premio!");
+        }
+
+        // 6. CHIUSURA
+        h.setWinner(winner);
+        h.setStatus(HackathonStatus.FINISHED); // Cambia stato nel DB
+        hackathonRepo.save(h);
+
+        return winner;
+    }
+
 }

@@ -16,7 +16,7 @@ public class FinishedState implements HackathonState {
 
     @Override
     public void evaluateProject(Hackathon context) {
-        throw new IllegalStateException("ERRORE: Non è momento di votare!");
+        throw new IllegalStateException("ERRORE: Non puoi votare!");
     }
 
 }

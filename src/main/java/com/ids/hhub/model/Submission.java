@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import java.util.ArrayList; // <--- Importante
+import java.util.List;      // <--- Importante
 
 import java.time.LocalDateTime;
 
@@ -27,6 +29,10 @@ public class Submission {
     @JsonIgnore
     @ToString.Exclude
     private Team team;
+
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonIgnore // Evita che quando stampi la submission ti stampi infinite valutazioni
+    private List<Evaluation> evaluations = new ArrayList<>(); // Inizializzala per evitare NullPointerException
 
     public Submission(String projectUrl, String description, Team team) {
         this.projectUrl = projectUrl;

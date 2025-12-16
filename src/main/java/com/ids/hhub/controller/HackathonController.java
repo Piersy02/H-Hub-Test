@@ -3,6 +3,7 @@ package com.ids.hhub.controller;
 import com.ids.hhub.dto.AddStaffDto;
 import com.ids.hhub.dto.CreateHackathonDto;
 import com.ids.hhub.model.Hackathon;
+import com.ids.hhub.model.Team;
 import com.ids.hhub.service.HackathonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -57,5 +58,15 @@ public class HackathonController {
         hackathonService.addStaffMember(id, dto, emailRichiedente);
 
         return ResponseEntity.ok("Membro dello staff aggiunto con successo!");
+    }
+
+    // POST /api/hackathons/{id}/close
+    @PostMapping("/{id}/close")
+    public ResponseEntity<String> closeHackathon(
+            @PathVariable Long id,
+            Authentication auth
+    ) {
+        Team winner = hackathonService.proclaimWinner(id, auth.getName());
+        return ResponseEntity.ok("Hackathon concluso! Il vincitore è il team: " + winner.getName());
     }
 }
