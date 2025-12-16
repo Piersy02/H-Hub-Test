@@ -61,10 +61,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/hackathons").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                        // Solo EVENT_CREATOR e ADMIN possono fare POST su /api/hackathons
-                        .requestMatchers(HttpMethod.POST, "/api/hackathons")
-                        .hasAnyAuthority("EVENT_CREATOR", "ADMIN")
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN") // Solo EVENT_CREATOR e ADMIN possono fare POST su /api/hackathons
+                        .requestMatchers(HttpMethod.POST, "/api/hackathons").hasAnyAuthority("EVENT_CREATOR", "ADMIN")
+                        .requestMatchers("/api/mentor/**").authenticated()
+                        .requestMatchers("/api/teams/**").authenticated()
+                        .requestMatchers("/api/submissions/**").authenticated()
+                        .requestMatchers("/api/evaluations/**").authenticated()
 
                         .anyRequest().authenticated()
                 )
