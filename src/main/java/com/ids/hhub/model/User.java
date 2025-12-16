@@ -27,6 +27,8 @@ public class User {
 
     // Lista dei ruoli staff (es. Giudice nell'Hackathon A, Mentore nel B)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonIgnore  //
+    @ToString.Exclude
     private List<StaffAssignment> staffAssignments;
 
     @ManyToOne // O @OneToOne se vuoi vincolo stretto, ma ManyToOne è più flessibile per storici futuri
