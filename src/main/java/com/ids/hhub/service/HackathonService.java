@@ -71,9 +71,9 @@ public class HackathonService {
         User targetUser = userRepo.findById(dto.getUserId())
                 .orElseThrow(() -> new RuntimeException("Utente target non trovato"));
 
-        // Evita duplicati
-        if (staffRepo.existsByUserIdAndHackathonIdAndRole(targetUser.getId(), hackathonId, dto.getRole())) {
-            throw new RuntimeException("L'utente ha già questo ruolo in questo hackathon!");
+        // Verifica se l'utente è già presente nello staff di questo hackathon (con QUALSIASI ruolo)
+        if (staffRepo.findByUserIdAndHackathonId(dto.getUserId(), hackathonId).isPresent()) {
+            throw new RuntimeException("L'utente fa già parte dello staff di questo hackathon! Non può avere due ruoli o essere aggiunto due volte.");
         }
 
         StaffAssignment assignment = new StaffAssignment(targetUser, hackathon, dto.getRole());
