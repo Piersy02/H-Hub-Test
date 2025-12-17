@@ -22,6 +22,8 @@ public class HackathonService {
     @Autowired private StaffAssignmentRepository staffRepo;
     @Autowired private PaymentService paymentService;
     @Autowired private ViolationReportRepository violationRepo;
+    @Autowired private SubmissionRepository submissionRepo;
+    @Autowired private TeamRepository teamRepo;
 
     // --- 1. CREAZIONE HACKATHON ---
     @Transactional
@@ -169,6 +171,48 @@ public class HackathonService {
 
         // 3. Restituisci la lista
         return violationRepo.findByHackathonId(hackathonId);
+    }
+
+    @Transactional
+    public void disqualifyTeam(Long hackathonId, Long teamId, String requesterEmail) {
+        // 1. Recupera i dati
+        Hackathon h = hackathonRepo.findById(hackathonId)
+                .orElseThrow(() -> new RuntimeException("Hackathon non trovato"));
+
+        Team team = teamRepo.findById(teamId)
+                .orElseThrow(() -> new RuntimeException("Team non trovato"));
+
+        User requester = userRepo.findByEmail(requesterEmail).orElseThrow();
+
+        // 2. Controllo Permessi: Solo Organizzatore o Admin
+        boolean isOrganizer = staffRepo.existsByUserIdAndHackathonIdAndRole(
+                requester.getId(), h.getId(), StaffRole.ORGANIZER);
+        boolean isAdmin = requester.getPlatformRole() == PlatformRole.ADMIN;
+
+        if (!isOrganizer && !isAdmin) {
+            throw new SecurityException("Solo l'Organizzatore può squalificare un team!");
+        }
+
+        // 3. Validazione: Il team è davvero iscritto a questo hackathon?
+        if (team.getHackathon() == null || !team.getHackathon().getId().equals(hackathonId)) {
+            throw new RuntimeException("Il team non è iscritto a questo hackathon (o è già stato rimosso).");
+        }
+
+        // 4. AZIONE DI SQUALIFICA
+
+        // Opzionale: Cancelliamo la sottomissione se ne avevano fatta una
+        if (team.getSubmission() != null) {
+            submissionRepo.delete(team.getSubmission());
+            team.setSubmission(null);
+        }
+
+        // Rimuoviamo il team dall'evento
+        team.setHackathon(null);
+
+        // Salviamo
+        teamRepo.save(team);
+
+        System.out.println("Team " + team.getName() + " squalificato dall'Hackathon " + h.getName());
     }
 
     // --- METODI DI LETTURA ---

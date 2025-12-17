@@ -81,6 +81,17 @@ public class HackathonController {
         return ResponseEntity.ok("Hackathon concluso! Il vincitore è il team: " + winner.getName());
     }
 
+    // POST /api/hackathons/{hackathonId}/teams/{teamId}/disqualify
+    @PostMapping("/{hackathonId}/teams/{teamId}/disqualify")
+    public ResponseEntity<String> disqualifyTeam(
+            @PathVariable Long hackathonId,
+            @PathVariable Long teamId,
+            Authentication auth
+    ) {
+        hackathonService.disqualifyTeam(hackathonId, teamId, auth.getName());
+        return ResponseEntity.ok("Team squalificato e rimosso dall'evento con successo.");
+    }
+
     // PATCH /api/hackathons/{id}/status
     @PatchMapping("/{id}/status")
     public ResponseEntity<String> changeStatus(
