@@ -277,9 +277,8 @@ public class HackathonService {
         Hackathon h = hackathonRepo.findById(hackathonId).orElseThrow();
         User requester = userRepo.findByEmail(requesterEmail).orElseThrow();
 
-        // Controllo: Sei Giudice o Organizzatore?
+        // Controllo: Sei dello staff?
         boolean isStaff = staffRepo.existsByUserIdAndHackathonId(requester.getId(), hackathonId);
-        // Nota: qui potresti essere più specifico (solo JUDGE o ORGANIZER)
 
         if (!isStaff && requester.getPlatformRole() != PlatformRole.ADMIN) {
             throw new SecurityException("Solo lo staff può vedere le sottomissioni prima della fine.");
