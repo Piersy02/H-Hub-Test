@@ -22,61 +22,42 @@ public class HackathonService {
     @Autowired private StaffAssignmentRepository staffRepo;
     @Autowired private PaymentService paymentService;
 
-    // --- CREATE HACKATHON ---
+    // --- 1. CREAZIONE HACKATHON ---
     @Transactional
     public Hackathon createHackathon(CreateHackathonDto dto, String organizerEmail) {
-        // 1. Recupera l'utente che vuole creare l'evento
+        // A. Recupera l'utente
         User organizer = userRepo.findByEmail(organizerEmail)
                 .orElseThrow(() -> new RuntimeException("Utente loggato non trovato"));
 
-        // 2. CONTROLLO RUOLO DI PIATTAFORMA
-        // Solo chi è EVENT_CREATOR (o ADMIN) può generare nuovi eventi.
-        // Nota: Ho corretto la variabile da 'creator' a 'organizer'
+        // B. Controllo Ruolo Piattaforma (Solo EVENT_CREATOR o ADMIN)
         if (organizer.getPlatformRole() != PlatformRole.EVENT_CREATOR
                 && organizer.getPlatformRole() != PlatformRole.ADMIN) {
             throw new SecurityException("Non hai i permessi per creare un Hackathon. Richiedi l'upgrade a Event Creator.");
         }
 
-        // 3. Crea l'entità Hackathon
-        Hackathon h = new Hackathon();
-        h.setName(dto.getName());
-        h.setDescription(dto.getDescription());
-        h.setRules(dto.getRules());
-        h.setRegistrationDeadline(dto.getRegistrationDeadline());
-        h.setMaxTeamSize(dto.getMaxTeamSize());
-        h.setStartDate(dto.getStartDate());
-        h.setEndDate(dto.getEndDate());
-        h.setPrizeAmount(dto.getPrizeAmount());
+        // C. Mappatura DTO -> Entity (Metodo privato helper)
+        Hackathon h = mapDtoToEntity(dto);
 
-        // Imposta lo stato iniziale
-        h.setStatus(HackathonStatus.REGISTRATION_OPEN);
-
-        // Salva per generare l'ID
+        // D. Salvataggio iniziale (per generare l'ID)
         h = hackathonRepo.save(h);
 
-        // 4. ASSEGNAZIONE RUOLO CONTESTUALE
-        // L'utente diventa automaticamente ORGANIZER di QUESTO specifico hackathon
+        // E. Assegnazione automatica Ruolo ORGANIZER
         StaffAssignment assignment = new StaffAssignment(organizer, h, StaffRole.ORGANIZER);
         staffRepo.save(assignment);
 
         return h;
     }
 
-    // --- ADD STAFF MEMBER ---
+    // --- 2. GESTIONE STAFF ---
     @Transactional
     public void addStaffMember(Long hackathonId, AddStaffDto dto, String requesterEmail) {
-        // 1. Chi sta facendo la richiesta?
         User requester = userRepo.findByEmail(requesterEmail)
                 .orElseThrow(() -> new RuntimeException("Utente richiedente non trovato"));
 
-        // 2. Recupera l'Hackathon
-        Hackathon hackathon = hackathonRepo.findById(hackathonId)
-                .orElseThrow(() -> new RuntimeException("Hackathon non trovato"));
+        Hackathon hackathon = getHackathonById(hackathonId);
 
-        // 3. CONTROLLO PERMESSI (Admin Globale O Organizzatore dell'evento)
+        // Controllo Permessi: Admin Globale O Organizzatore dell'evento
         boolean isAdmin = requester.getPlatformRole() == PlatformRole.ADMIN;
-
-        // Verifica se il richiedente è ORGANIZER per QUESTO specifico hackathon
         boolean isOrganizerOfThisEvent = staffRepo.existsByUserIdAndHackathonIdAndRole(
                 requester.getId(), hackathonId, StaffRole.ORGANIZER);
 
@@ -84,55 +65,61 @@ public class HackathonService {
             throw new SecurityException("NON AUTORIZZATO: Solo l'Admin o l'Organizzatore possono gestire lo staff.");
         }
 
-        // 4. Recupera l'utente da promuovere a staff
         User targetUser = userRepo.findById(dto.getUserId())
                 .orElseThrow(() -> new RuntimeException("Utente target non trovato"));
 
-        // 5. Evita duplicati (Se è già staff con quel ruolo, errore)
+        // Evita duplicati
         if (staffRepo.existsByUserIdAndHackathonIdAndRole(targetUser.getId(), hackathonId, dto.getRole())) {
             throw new RuntimeException("L'utente ha già questo ruolo in questo hackathon!");
         }
 
-        // 6. Salva la nuova assegnazione
         StaffAssignment assignment = new StaffAssignment(targetUser, hackathon, dto.getRole());
         staffRepo.save(assignment);
     }
 
-    // --- GET BY ID ---
-    public Hackathon getHackathonById(Long id) {
-        return hackathonRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Hackathon non trovato con ID: " + id));
+    // --- 3. CAMBIO STATO (Manuale) ---
+    @Transactional
+    public void changeHackathonStatus(Long hackathonId, HackathonStatus newStatus, String requesterEmail) {
+        Hackathon h = getHackathonById(hackathonId);
+        User requester = userRepo.findByEmail(requesterEmail).orElseThrow();
+
+        // Controllo Permessi
+        boolean isOrganizer = staffRepo.existsByUserIdAndHackathonIdAndRole(
+                requester.getId(), h.getId(), StaffRole.ORGANIZER);
+        boolean isAdmin = requester.getPlatformRole() == PlatformRole.ADMIN;
+
+        if (!isOrganizer && !isAdmin) {
+            throw new SecurityException("Solo l'Organizzatore può cambiare lo stato dell'evento!");
+        }
+
+        h.setStatus(newStatus);
+        hackathonRepo.save(h);
+        System.out.println("Stato Hackathon " + h.getId() + " cambiato in: " + newStatus);
     }
 
-    // --- GET ALL ---
-    public List<Hackathon> getAllHackathons() {
-        return hackathonRepo.findAll();
-    }
-
+    // --- 4. CHIUSURA E PROCLAMAZIONE VINCITORE ---
     @Transactional
     public Team proclaimWinner(Long hackathonId, String organizerEmail) {
-        // 1. Recupera Hackathon e Organizzatore
-        Hackathon h = hackathonRepo.findById(hackathonId).orElseThrow();
+        Hackathon h = getHackathonById(hackathonId);
         User organizer = userRepo.findByEmail(organizerEmail).orElseThrow();
 
-        // 2. Controllo Permessi (Solo Organizzatore)
+        // Controllo Permessi
         boolean isOrganizer = staffRepo.existsByUserIdAndHackathonIdAndRole(
                 organizer.getId(), h.getId(), StaffRole.ORGANIZER);
         if (!isOrganizer) throw new SecurityException("Solo l'organizzatore può chiudere l'evento.");
 
-        // 3. Controllo Stato (Deve essere in Valutazione)
+        // Controllo Stato
         if (h.getStatus() != HackathonStatus.EVALUATION) {
             throw new IllegalStateException("L'hackathon deve essere in fase di valutazione per chiudere.");
         }
 
-        // 4. ALGORITMO CALCOLO VINCITORE
+        // Algoritmo Calcolo Vincitore (Media Voti)
         Team winner = null;
         double maxScore = -1.0;
 
         for (Team team : h.getTeams()) {
             Submission sub = team.getSubmission();
             if (sub != null && !sub.getEvaluations().isEmpty()) {
-                // Calcola media voti
                 double avg = sub.getEvaluations().stream()
                         .mapToInt(Evaluation::getScore)
                         .average()
@@ -146,49 +133,48 @@ public class HackathonService {
         }
 
         if (winner == null) {
-            throw new RuntimeException("Nessun vincitore calcolabile (forse nessuna valutazione?)");
+            throw new RuntimeException("Impossibile determinare un vincitore: nessuna valutazione trovata.");
         }
 
-        // 5. PAGAMENTO (Strategy Pattern)
+        // Pagamento Premio (Strategy Pattern)
         boolean paid = paymentService.processPayment(winner.getLeader().getEmail(), h.getPrizeAmount());
         if (!paid) {
-            throw new RuntimeException("Errore nel pagamento del premio!");
+            throw new RuntimeException("Errore critico durante il pagamento del premio!");
         }
 
-        // 6. CHIUSURA
+        // Chiusura Evento
         h.setWinner(winner);
-        h.setStatus(HackathonStatus.FINISHED); // Cambia stato nel DB
+        h.setStatus(HackathonStatus.FINISHED);
         hackathonRepo.save(h);
 
         return winner;
     }
 
-    @Transactional
-    public void changeHackathonStatus(Long hackathonId, HackathonStatus newStatus, String requesterEmail) {
-        // 1. Recupera Hackathon e Utente
-        Hackathon h = hackathonRepo.findById(hackathonId)
-                .orElseThrow(() -> new RuntimeException("Hackathon non trovato"));
-
-        User requester = userRepo.findByEmail(requesterEmail).orElseThrow();
-
-        // 2. Controllo Permessi: Sei l'Organizzatore o l'Admin?
-        boolean isOrganizer = staffRepo.existsByUserIdAndHackathonIdAndRole(
-                requester.getId(), h.getId(), StaffRole.ORGANIZER);
-        boolean isAdmin = requester.getPlatformRole() == PlatformRole.ADMIN;
-
-        if (!isOrganizer && !isAdmin) {
-            throw new SecurityException("Solo l'Organizzatore può cambiare lo stato dell'evento!");
-        }
-
-        // 3. (Opzionale) Validazione Transizione
-        // Qui potresti impedire salti illogici (es. da FINISHED a REGISTRATION_OPEN),
-        // ma è comodo poter fare rollback, quindi lasciamo libero.
-
-        // 4. Aggiorna lo stato
-        h.setStatus(newStatus);
-        hackathonRepo.save(h);
-
-        System.out.println("Stato Hackathon " + h.getId() + " cambiato in: " + newStatus);
+    // --- METODI DI LETTURA ---
+    public Hackathon getHackathonById(Long id) {
+        return hackathonRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Hackathon non trovato con ID: " + id));
     }
 
+    public List<Hackathon> getAllHackathons() {
+        return hackathonRepo.findAll();
+    }
+
+    // --- HELPER PRIVATO PER MAPPATURA ---
+    private Hackathon mapDtoToEntity(CreateHackathonDto dto) {
+        Hackathon h = new Hackathon();
+        h.setName(dto.getName());
+        h.setDescription(dto.getDescription());
+        h.setRules(dto.getRules());
+        h.setLocation(dto.getLocation());
+        h.setRegistrationDeadline(dto.getRegistrationDeadline());
+        h.setMaxTeamSize(dto.getMaxTeamSize());
+        h.setStartDate(dto.getStartDate());
+        h.setEndDate(dto.getEndDate());
+        h.setPrizeAmount(dto.getPrizeAmount());
+
+        // Stato di default
+        h.setStatus(HackathonStatus.REGISTRATION_OPEN);
+        return h;
+    }
 }

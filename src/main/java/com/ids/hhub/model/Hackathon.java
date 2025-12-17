@@ -24,6 +24,7 @@ public class Hackathon {
     private String name;
     private String description;
     private String rules;
+    private String location;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startDate;
