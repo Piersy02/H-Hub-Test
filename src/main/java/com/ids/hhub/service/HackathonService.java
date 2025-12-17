@@ -50,6 +50,38 @@ public class HackathonService {
         StaffAssignment assignment = new StaffAssignment(organizer, h, StaffRole.ORGANIZER);
         staffRepo.save(assignment);
 
+        // --- 4. ASSEGNAZIONE GIUDICE (Se presente nel DTO) ---
+        if (dto.getJudgeId() != null) {
+            // Evita che l'organizzatore si assegni anche come giudice (conflitto ruoli)
+            if (dto.getJudgeId().equals(organizer.getId())) {
+                throw new RuntimeException("L'organizzatore non può essere anche Giudice!");
+            }
+
+            User judge = userRepo.findById(dto.getJudgeId())
+                    .orElseThrow(() -> new RuntimeException("Giudice non trovato con ID: " + dto.getJudgeId()));
+
+            StaffAssignment judgeAssignment = new StaffAssignment(judge, h, StaffRole.JUDGE);
+            staffRepo.save(judgeAssignment);
+        }
+
+        // --- 5. ASSEGNAZIONE MENTORI (Se presenti nel DTO) ---
+        if (dto.getMentorIds() != null && !dto.getMentorIds().isEmpty()) {
+            for (Long mentorId : dto.getMentorIds()) {
+                // Evita duplicati o conflitti con l'organizzatore
+                if (mentorId.equals(organizer.getId())) continue; // Salta se stesso
+                if (dto.getJudgeId() != null && mentorId.equals(dto.getJudgeId())) continue; // Salta se è già giudice
+
+                User mentor = userRepo.findById(mentorId)
+                        .orElseThrow(() -> new RuntimeException("Mentore non trovato con ID: " + mentorId));
+
+                // Verifica se abbiamo già salvato questo mentore (caso ID duplicati nella lista)
+                if (!staffRepo.existsByUserIdAndHackathonId(mentor.getId(), h.getId())) {
+                    StaffAssignment mentorAssignment = new StaffAssignment(mentor, h, StaffRole.MENTOR);
+                    staffRepo.save(mentorAssignment);
+                }
+            }
+        }
+
         return h;
     }
 

@@ -3,6 +3,7 @@ package com.ids.hhub.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class CreateHackathonDto {
@@ -22,4 +23,7 @@ public class CreateHackathonDto {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endDate;
     private double prizeAmount;
+
+    private Long judgeId;           // ID del Giudice (opzionale alla creazione) scelta design
+    private List<Long> mentorIds;   // Lista di ID dei Mentori (es. [2, 5, 8]) opzionale scelta design)
 }
