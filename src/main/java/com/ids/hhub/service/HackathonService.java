@@ -219,21 +219,55 @@ public class HackathonService {
         staffRepo.save(assignment);
     }
 
-    // Helper 6: Calcolo Vincitore (Estratto per pulizia)
+    // Helper 6: Calcolo Vincitore (Aggiornato con controllo "Tutti Giudicati")
     private Team calculateWinner(Hackathon h) {
+
+        // --- 1. CONTROLLO PRELIMINARE: TUTTI GIUDICATI? ---
+        for (Team team : h.getTeams()) {
+            Submission sub = team.getSubmission();
+
+            // Se il team ha sottomesso un progetto...
+            if (sub != null) {
+                // ...ma la lista delle valutazioni è vuota
+                if (sub.getEvaluations().isEmpty()) {
+                    throw new IllegalStateException(
+                            "Impossibile proclamare il vincitore: Il team '" + team.getName() +
+                                    "' ha inviato un progetto ma non è stato ancora giudicato."
+                    );
+                }
+            }
+        }
+
+        // --- 2. CALCOLO VINCITORE (Se siamo qui, tutti i progetti hanno un voto) ---
         Team winner = null;
         int maxScore = -1;
+
+        boolean atLeastOneSubmission = false;
+
         for (Team team : h.getTeams()) {
             Submission sub = team.getSubmission();
             if (sub != null && !sub.getEvaluations().isEmpty()) {
-                Evaluation eval = sub.getEvaluations().get(0);
+                atLeastOneSubmission = true;
+                Evaluation eval = sub.getEvaluations().get(0); // Prendiamo l'unico voto
+
                 if (eval.getScore() > maxScore) {
                     maxScore = eval.getScore();
                     winner = team;
                 }
+                // Gestione pareggio? Per ora vince il primo trovato o l'ultimo,
+                // se serve logica avanzata va aggiunta qui.
             }
         }
-        if (winner == null) throw new RuntimeException("Nessun vincitore calcolabile!");
+
+        if (!atLeastOneSubmission) {
+            throw new RuntimeException("Nessun progetto sottomesso in questo Hackathon. Impossibile proclamare un vincitore.");
+        }
+
+        if (winner == null) {
+            // Caso teorico quasi impossibile se atLeastOneSubmission è true, ma per sicurezza:
+            throw new RuntimeException("Errore nel calcolo del punteggio.");
+        }
+
         return winner;
     }
 
