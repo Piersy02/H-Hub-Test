@@ -21,6 +21,7 @@ public class HackathonService {
     @Autowired private UserRepository userRepo;
     @Autowired private StaffAssignmentRepository staffRepo;
     @Autowired private PaymentService paymentService;
+    @Autowired private ViolationReportRepository violationRepo;
 
     // --- 1. CREAZIONE HACKATHON ---
     @Transactional
@@ -148,6 +149,26 @@ public class HackathonService {
         hackathonRepo.save(h);
 
         return winner;
+    }
+
+    public List<ViolationReport> getViolationReports(Long hackathonId, String requesterEmail) {
+        // 1. Recupera Hackathon e Utente
+        Hackathon h = hackathonRepo.findById(hackathonId)
+                .orElseThrow(() -> new RuntimeException("Hackathon non trovato"));
+
+        User requester = userRepo.findByEmail(requesterEmail).orElseThrow();
+
+        // 2. Controllo Permessi: Sei l'Organizzatore o l'Admin?
+        boolean isOrganizer = staffRepo.existsByUserIdAndHackathonIdAndRole(
+                requester.getId(), h.getId(), StaffRole.ORGANIZER);
+        boolean isAdmin = requester.getPlatformRole() == PlatformRole.ADMIN;
+
+        if (!isOrganizer && !isAdmin) {
+            throw new SecurityException("Solo l'Organizzatore può vedere le segnalazioni!");
+        }
+
+        // 3. Restituisci la lista
+        return violationRepo.findByHackathonId(hackathonId);
     }
 
     // --- METODI DI LETTURA ---

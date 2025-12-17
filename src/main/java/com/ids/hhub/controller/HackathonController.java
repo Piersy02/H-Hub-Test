@@ -5,6 +5,7 @@ import com.ids.hhub.dto.ChangeStatusDto;
 import com.ids.hhub.dto.CreateHackathonDto;
 import com.ids.hhub.model.Hackathon;
 import com.ids.hhub.model.Team;
+import com.ids.hhub.model.ViolationReport;
 import com.ids.hhub.service.HackathonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,15 @@ public class HackathonController {
     @GetMapping
     public ResponseEntity<List<Hackathon>> getAll() {
         return ResponseEntity.ok(hackathonService.getAllHackathons());
+    }
+
+    // GET /api/hackathons/{id}/reports
+    @GetMapping("/{id}/reports")
+    public ResponseEntity<List<ViolationReport>> getReports(
+            @PathVariable Long id,
+            Authentication auth
+    ) {
+        return ResponseEntity.ok(hackathonService.getViolationReports(id, auth.getName()));
     }
 
     // 2. DETTAGLIO SINGOLO HACKATHON (Pubblico)
