@@ -16,4 +16,6 @@ public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment
 
     // Conta quanti staff con quel ruolo ci sono nell'hackathon
     long countByHackathonIdAndRole(Long hackathonId, StaffRole role);
+
+    boolean existsByUserIdAndHackathonId(Long userId, Long hackathonId);
 }

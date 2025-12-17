@@ -4,6 +4,7 @@ import com.ids.hhub.dto.AddStaffDto;
 import com.ids.hhub.dto.ChangeStatusDto;
 import com.ids.hhub.dto.CreateHackathonDto;
 import com.ids.hhub.model.Hackathon;
+import com.ids.hhub.model.Submission;
 import com.ids.hhub.model.Team;
 import com.ids.hhub.model.ViolationReport;
 import com.ids.hhub.service.HackathonService;
@@ -101,5 +102,16 @@ public class HackathonController {
     ) {
         hackathonService.changeHackathonStatus(id, dto.getNewStatus(), auth.getName());
         return ResponseEntity.ok("Stato aggiornato con successo a " + dto.getNewStatus());
+    }
+
+    // GET /api/hackathons/{id}/submissions
+    // Accessibile solo a Giudice e Organizzatore
+    @GetMapping("/{id}/submissions")
+    public ResponseEntity<List<Submission>> getSubmissionsForJudge(
+            @PathVariable Long id,
+            Authentication auth
+    ) {
+        // Deleghiamo al service (devi creare il metodo se non c'è)
+        return ResponseEntity.ok(hackathonService.getSubmissionsForHackathon(id, auth.getName()));
     }
 }

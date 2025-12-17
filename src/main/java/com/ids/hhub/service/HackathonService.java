@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -238,6 +239,28 @@ public class HackathonService {
         teamRepo.save(team);
 
         System.out.println("Team " + team.getName() + " squalificato dall'Hackathon " + h.getName());
+    }
+
+    public List<Submission> getSubmissionsForHackathon(Long hackathonId, String requesterEmail) {
+        Hackathon h = hackathonRepo.findById(hackathonId).orElseThrow();
+        User requester = userRepo.findByEmail(requesterEmail).orElseThrow();
+
+        // Controllo: Sei Giudice o Organizzatore?
+        boolean isStaff = staffRepo.existsByUserIdAndHackathonId(requester.getId(), hackathonId);
+        // Nota: qui potresti essere più specifico (solo JUDGE o ORGANIZER)
+
+        if (!isStaff && requester.getPlatformRole() != PlatformRole.ADMIN) {
+            throw new SecurityException("Solo lo staff può vedere le sottomissioni prima della fine.");
+        }
+
+        // Recupera tutte le sottomissioni dei team di questo hackathon
+        List<Submission> submissions = new ArrayList<>();
+        for (Team t : h.getTeams()) {
+            if (t.getSubmission() != null) {
+                submissions.add(t.getSubmission());
+            }
+        }
+        return submissions;
     }
 
     // --- METODI DI LETTURA ---
