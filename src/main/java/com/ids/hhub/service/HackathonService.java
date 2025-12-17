@@ -8,6 +8,7 @@ import com.ids.hhub.model.enums.PlatformRole;
 import com.ids.hhub.model.enums.StaffRole;
 import com.ids.hhub.repository.*;
 import com.ids.hhub.service.external.PaymentService;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,6 +77,14 @@ public class HackathonService {
             throw new RuntimeException("L'utente fa già parte dello staff di questo hackathon! Non può avere due ruoli o essere aggiunto due volte.");
         }
 
+        // VINCOLO GIUDICE UNICO
+        if (dto.getRole() == StaffRole.JUDGE) {
+            long existingJudges = staffRepo.countByHackathonIdAndRole(hackathonId, StaffRole.JUDGE);
+            if (existingJudges >= 1) {
+                throw new RuntimeException("IMPOSSIBILE: Esiste già un Giudice per questo Hackathon. Il regolamento ne prevede solo uno.");
+            }
+        }
+
         StaffAssignment assignment = new StaffAssignment(targetUser, hackathon, dto.getRole());
         staffRepo.save(assignment);
     }
@@ -103,41 +112,28 @@ public class HackathonService {
     // --- 4. CHIUSURA E PROCLAMAZIONE VINCITORE ---
     @Transactional
     public Team proclaimWinner(Long hackathonId, String organizerEmail) {
+        // 1. Recupera Hackathon e Organizzatore
         Hackathon h = getHackathonById(hackathonId);
         User organizer = userRepo.findByEmail(organizerEmail).orElseThrow();
 
-        // Controllo Permessi
+        // 2. Controllo Permessi (Solo Organizzatore)
         boolean isOrganizer = staffRepo.existsByUserIdAndHackathonIdAndRole(
                 organizer.getId(), h.getId(), StaffRole.ORGANIZER);
-        if (!isOrganizer) throw new SecurityException("Solo l'organizzatore può chiudere l'evento.");
+
+        // Nota: Anche l'Admin dovrebbe poter chiudere in caso di emergenza
+        boolean isAdmin = organizer.getPlatformRole() == PlatformRole.ADMIN;
+
+        if (!isOrganizer && !isAdmin) {
+            throw new SecurityException("Solo l'organizzatore può chiudere l'evento.");
+        };
 
         // Controllo Stato
         if (h.getStatus() != HackathonStatus.EVALUATION) {
             throw new IllegalStateException("L'hackathon deve essere in fase di valutazione per chiudere.");
         }
 
-        // Algoritmo Calcolo Vincitore (Media Voti)
-        Team winner = null;
-        double maxScore = -1.0;
-
-        for (Team team : h.getTeams()) {
-            Submission sub = team.getSubmission();
-            if (sub != null && !sub.getEvaluations().isEmpty()) {
-                double avg = sub.getEvaluations().stream()
-                        .mapToInt(Evaluation::getScore)
-                        .average()
-                        .orElse(0.0);
-
-                if (avg > maxScore) {
-                    maxScore = avg;
-                    winner = team;
-                }
-            }
-        }
-
-        if (winner == null) {
-            throw new RuntimeException("Impossibile determinare un vincitore: nessuna valutazione trovata.");
-        }
+        // 4. ALGORITMO (Voto Unico)
+        Team winner = getWinner(h);
 
         // Pagamento Premio (Strategy Pattern)
         boolean paid = paymentService.processPayment(winner.getLeader().getEmail(), h.getPrizeAmount());
@@ -150,6 +146,35 @@ public class HackathonService {
         h.setStatus(HackathonStatus.FINISHED);
         hackathonRepo.save(h);
 
+        return winner;
+    }
+
+    private static @NonNull Team getWinner(Hackathon h) {
+        Team winner = null;
+        int maxScore = -1; // Partiamo da -1 così anche 0 è valido
+
+        for (Team team : h.getTeams()) {
+            Submission sub = team.getSubmission();
+
+            // Controlliamo se c'è una sottomissione e se il giudice l'ha votata
+            if (sub != null && !sub.getEvaluations().isEmpty()) {
+
+                // PRENDIAMO L'UNICO VOTO DISPONIBILE
+                // Poiché c'è un solo giudice, la lista avrà size() == 1
+                Evaluation eval = sub.getEvaluations().getFirst();
+                int score = eval.getScore();
+
+                // Logica "Re della collina": se trovo un voto più alto, lui è il nuovo vincitore
+                if (score > maxScore) {
+                    maxScore = score;
+                    winner = team;
+                }
+            }
+        }
+
+        if (winner == null) {
+            throw new RuntimeException("Impossibile proclamare un vincitore: Nessun team ha ricevuto valutazioni!");
+        }
         return winner;
     }
 
