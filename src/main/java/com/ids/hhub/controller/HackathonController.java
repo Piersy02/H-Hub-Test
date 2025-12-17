@@ -128,7 +128,7 @@ public class HackathonController {
     }
 
     // =================================================================================
-    // 3. HOME PAGE (LISTA EVENTI)
+    // 3. HOME PAGE (LISTA HACKATHON)
     // =================================================================================
     // CHI LO USA: Chiunque apra la Home Page del sito.
     // COSA FA: Restituisce l'elenco di tutti gli hackathon disponibili nel sistema.
@@ -143,8 +143,6 @@ public class HackathonController {
     // =================================================================================
     // CHI LO USA: Un utente loggato che fa parte dello staff in qualche evento.
     // COSA FA: Risponde alla domanda "In quali hackathon sto lavorando?".
-    // ESEMPIO: Se Mario è Giudice nell'Hackathon A e Mentore nel B, vedrà una lista con A e B.
-    // DATI MOSTRATI: Lista di schede complete (StaffDto) perché è il suo lavoro.
     @GetMapping("/staff/me")
     public ResponseEntity<List<HackathonStaffDto>> getMyWorkingEvents(Authentication auth) {
         return ResponseEntity.ok(hackathonService.getMyStaffHackathons(auth.getName()));
