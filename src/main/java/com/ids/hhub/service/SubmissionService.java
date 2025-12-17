@@ -26,6 +26,8 @@ public class SubmissionService {
             throw new SecurityException("Devi essere membro del team per sottomettere!");
         }
 
+        //controllare se la data è scaduta oppure se ne occupa il pattern a decidere in automatico quando cambiare status
+
         // 2. STATE PATTERN CHECK
         // Lancia eccezione se non siamo in ONGOING
         team.getHackathon().getCurrentStateObject().submitProject(team.getHackathon(), team);
