@@ -1,8 +1,6 @@
 package com.ids.hhub.controller;
 
-import com.ids.hhub.dto.AddStaffDto;
-import com.ids.hhub.dto.ChangeStatusDto;
-import com.ids.hhub.dto.CreateHackathonDto;
+import com.ids.hhub.dto.*;
 import com.ids.hhub.model.Hackathon;
 import com.ids.hhub.model.Submission;
 import com.ids.hhub.model.Team;
@@ -113,5 +111,37 @@ public class HackathonController {
     ) {
         // Deleghiamo al service (devi creare il metodo se non c'è)
         return ResponseEntity.ok(hackathonService.getSubmissionsForHackathon(id, auth.getName()));
+    }
+
+    // 1. DETTAGLIO PUBBLICO (Aperto a tutti: Visitatori e Utenti)
+    // GET /api/hackathons/{id}
+    @GetMapping("/{id}")
+    public ResponseEntity<HackathonPublicDto> getPublicDetails(@PathVariable Long id) {
+        // Nota: Non serve Authentication qui, è pubblico
+        return ResponseEntity.ok(hackathonService.getHackathonPublicDetails(id));
+    }
+
+    // 2. DETTAGLIO STAFF (Protetto: Solo Staff di quell'evento)
+    // GET /api/hackathons/{id}/dashboard
+    @GetMapping("/{id}/dashboard")
+    public ResponseEntity<HackathonStaffDto> getStaffDashboard(
+            @PathVariable Long id,
+            Authentication auth
+    ) {
+        return ResponseEntity.ok(hackathonService.getHackathonStaffDetails(id, auth.getName()));
+    }
+
+    // 3. LISTA PUBBLICA (Home Page)
+    // GET /api/hackathons
+    @GetMapping
+    public ResponseEntity<List<HackathonPublicDto>> getAllPublic() {
+        return ResponseEntity.ok(hackathonService.getAllPublicHackathons());
+    }
+
+    // 4. I MIEI HACKATHON DI STAFF (Dashboard Personale)
+    // GET /api/hackathons/staff/me
+    @GetMapping("/staff/me")
+    public ResponseEntity<List<HackathonStaffDto>> getMyStaffDashboard(Authentication auth) {
+        return ResponseEntity.ok(hackathonService.getMyStaffHackathons(auth.getName()));
     }
 }
