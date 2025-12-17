@@ -20,12 +20,6 @@ public class HackathonController {
     @Autowired
     private HackathonService hackathonService;
 
-    // 1. LISTA COMPLETA (Pubblico)
-    @GetMapping
-    public ResponseEntity<List<HackathonPublicDto>> getAll() {
-        return ResponseEntity.ok(hackathonService.getAllPublicHackathons());
-    }
-
     // GET /api/hackathons/{id}/reports
     @GetMapping("/{id}/reports")
     public ResponseEntity<List<ViolationReport>> getReports(
@@ -106,35 +100,53 @@ public class HackathonController {
         return ResponseEntity.ok(hackathonService.getSubmissionsForHackathon(id, auth.getName()));
     }
 
-    // 1. DETTAGLIO PUBBLICO (Aperto a tutti: Visitatori e Utenti)
-    // GET /api/hackathons/{id}
+    // =================================================================================
+    // 1. SCHEDA EVENTO (PUBBLICA)
+    // =================================================================================
+    // CHI LO USA: Visitatori (non loggati) e Utenti normali.
+    // COSA FA: Mostra la "locandina" dell'evento.
+    // DATI MOSTRATI: Nome, Descrizione, Date, Luogo.
+    // DATI NASCOSTI: Budget, Regole interne, Email dello staff.
     @GetMapping("/{id}")
-    public ResponseEntity<HackathonPublicDto> getPublicDetails(@PathVariable Long id) {
-        // Nota: Non serve Authentication qui, è pubblico
+    public ResponseEntity<HackathonPublicDto> getHackathonPublicInfo(@PathVariable Long id) {
         return ResponseEntity.ok(hackathonService.getHackathonPublicDetails(id));
     }
 
-    // 2. DETTAGLIO STAFF (Protetto: Solo Staff di quell'evento)
-    // GET /api/hackathons/{id}/dashboard
+    // =================================================================================
+    // 2. DASHBOARD DI GESTIONE (RISERVATA ALLO STAFF)
+    // =================================================================================
+    // CHI LO USA: Solo l'Organizzatore, il Giudice o il Mentore di *questo* specifico evento.
+    // COSA FA: Apre il pannello di controllo dell'evento.
+    // DATI MOSTRATI: Tutto (incluso Budget, Regole complete, Lista completa dello staff).
+    // SICUREZZA: Se provo ad accedere ma non sono staff, ricevo errore 403.
     @GetMapping("/{id}/dashboard")
-    public ResponseEntity<HackathonStaffDto> getStaffDashboard(
+    public ResponseEntity<HackathonStaffDto> getHackathonStaffInfo(
             @PathVariable Long id,
             Authentication auth
     ) {
         return ResponseEntity.ok(hackathonService.getHackathonStaffDetails(id, auth.getName()));
     }
 
-    // 3. LISTA PUBBLICA (Home Page)
-    // GET /api/hackathons
+    // =================================================================================
+    // 3. HOME PAGE (LISTA EVENTI)
+    // =================================================================================
+    // CHI LO USA: Chiunque apra la Home Page del sito.
+    // COSA FA: Restituisce l'elenco di tutti gli hackathon disponibili nel sistema.
+    // DATI MOSTRATI: Una lista di schede pubbliche (solo info base).
     @GetMapping
-    public ResponseEntity<List<HackathonPublicDto>> getAllPublic() {
+    public ResponseEntity<List<HackathonPublicDto>> getHomepageList() {
         return ResponseEntity.ok(hackathonService.getAllPublicHackathons());
     }
 
-    // 4. I MIEI HACKATHON DI STAFF (Dashboard Personale)
-    // GET /api/hackathons/staff/me
+    // =================================================================================
+    // 4. I MIEI LAVORI (AREA PERSONALE STAFF)
+    // =================================================================================
+    // CHI LO USA: Un utente loggato che fa parte dello staff in qualche evento.
+    // COSA FA: Risponde alla domanda "In quali hackathon sto lavorando?".
+    // ESEMPIO: Se Mario è Giudice nell'Hackathon A e Mentore nel B, vedrà una lista con A e B.
+    // DATI MOSTRATI: Lista di schede complete (StaffDto) perché è il suo lavoro.
     @GetMapping("/staff/me")
-    public ResponseEntity<List<HackathonStaffDto>> getMyStaffDashboard(Authentication auth) {
+    public ResponseEntity<List<HackathonStaffDto>> getMyWorkingEvents(Authentication auth) {
         return ResponseEntity.ok(hackathonService.getMyStaffHackathons(auth.getName()));
     }
 }

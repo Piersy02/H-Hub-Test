@@ -11,7 +11,6 @@ public class HackathonStaffDto extends HackathonPublicDto {
 
     // Dati sensibili visibili solo allo staff
     private double prizeAmount; // Il budget
-    private String rules;       // Il regolamento completo
 
     // Lista completa dello staff con dettagli
     private List<StaffAssignment> fullStaffList;

@@ -298,6 +298,7 @@ public class HackathonService {
         dto.setName(h.getName());
         dto.setDescription(h.getDescription());
         dto.setLocation(h.getLocation());
+        dto.setRules(h.getRules());
         dto.setStatus(h.getStatus().toString());
         dto.setStartDate(h.getStartDate());
         dto.setEndDate(h.getEndDate());
@@ -321,6 +322,7 @@ public class HackathonService {
         dto.setName(publicDto.getName());
         dto.setDescription(publicDto.getDescription());
         dto.setLocation(publicDto.getLocation());
+        dto.setRules(publicDto.getRules());
         dto.setStatus(publicDto.getStatus());
         dto.setStartDate(publicDto.getStartDate());
         dto.setEndDate(publicDto.getEndDate());
@@ -330,7 +332,6 @@ public class HackathonService {
 
         // Aggiungi campi sensibili
         dto.setPrizeAmount(h.getPrizeAmount());
-        dto.setRules(h.getRules());
         dto.setFullStaffList(h.getStaff()); // Qui vedrà la lista completa
         dto.setTotalTeamsRegistered(h.getTeams().size());
 

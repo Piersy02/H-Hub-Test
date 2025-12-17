@@ -11,6 +11,7 @@ public class HackathonPublicDto {
     private String description;
     private String location;
     private String status; // Stringa dell'Enum
+    private String rules;
 
     // Date importanti per il pubblico
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
