@@ -343,10 +343,6 @@ public class HackathonService {
                 .orElseThrow(() -> new RuntimeException("Hackathon non trovato con ID: " + id));
     }
 
-    public List<Hackathon> getAllHackathons() {
-        return hackathonRepo.findAll();
-    }
-
     // 1. PER TUTTI (Visitatori/Utenti) - Ritorna DTO Pubblico
     public HackathonPublicDto getHackathonPublicDetails(Long id) {
         Hackathon h = getHackathonById(id);

@@ -22,8 +22,8 @@ public class HackathonController {
 
     // 1. LISTA COMPLETA (Pubblico)
     @GetMapping
-    public ResponseEntity<List<Hackathon>> getAll() {
-        return ResponseEntity.ok(hackathonService.getAllHackathons());
+    public ResponseEntity<List<HackathonPublicDto>> getAll() {
+        return ResponseEntity.ok(hackathonService.getAllPublicHackathons());
     }
 
     // GET /api/hackathons/{id}/reports
@@ -33,13 +33,6 @@ public class HackathonController {
             Authentication auth
     ) {
         return ResponseEntity.ok(hackathonService.getViolationReports(id, auth.getName()));
-    }
-
-    // 2. DETTAGLIO SINGOLO HACKATHON (Pubblico)
-    // Serve quando un visitatore clicca su una card per leggere il regolamento
-    @GetMapping("/{id}")
-    public ResponseEntity<Hackathon> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(hackathonService.getHackathonById(id));
     }
 
     // 3. CREAZIONE (Solo Utenti Loggati che siano ADMIN o EVENT_CREATOR)
