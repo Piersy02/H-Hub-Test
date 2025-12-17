@@ -26,7 +26,11 @@ public class SubmissionService {
             throw new SecurityException("Devi essere membro del team per sottomettere!");
         }
 
-        //controllare se la data è scaduta oppure se ne occupa il pattern a decidere in automatico quando cambiare status
+        // CONTROLLO SCADENZA TEMPORALE
+        Hackathon h = team.getHackathon();
+        if (LocalDateTime.now().isAfter(h.getEndDate())) {
+            throw new RuntimeException("Tempo scaduto! La deadline per la consegna è passata.");
+        }
 
         // 2. STATE PATTERN CHECK
         // Lancia eccezione se non siamo in ONGOING
