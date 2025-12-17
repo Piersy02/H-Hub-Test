@@ -226,6 +226,8 @@ public class HackathonService {
         for (Team team : h.getTeams()) {
             Submission sub = team.getSubmission();
 
+            // Se sub è NULL (il team non ha consegnato), questo IF è FALSO.
+            // Quindi il codice salta tutto e passa al prossimo team.
             // Se il team ha sottomesso un progetto...
             if (sub != null) {
                 // ...ma la lista delle valutazioni è vuota
