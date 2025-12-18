@@ -37,8 +37,7 @@ public class UserService {
 
         // Controllo di sicurezza: Non cancellare se stessi o altri Admin (opzionale)
         if (user.getPlatformRole() == PlatformRole.ADMIN) {
-            // throw new RuntimeException("Non puoi cancellare un amministratore.");
-            // (Commentato: decidi tu se permetterlo)
+            throw new RuntimeException("Non puoi cancellare un amministratore.");
         }
 
         // NOTA IMPORTANTE SULLE RELAZIONI:
