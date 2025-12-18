@@ -37,16 +37,20 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
 
-                // 2. Abilita Basic Auth (per Swagger/Postman)
+                // 2. Abilita Basic Auth
                 .httpBasic(withDefaults())
 
-                // 3. GESTIONE ECCEZIONI (Risposte JSON invece di HTML o redirect)
+                // 3. GESTIONE ECCEZIONI (Il cuore del fix)
                 .exceptionHandling(ex -> ex
+                        // A. Se l'utente NON è loggato (401)
                         .authenticationEntryPoint((request, response, authException) -> {
+                            // Rimuove l'header che fa scattare il popup del browser
+                            response.setHeader("WWW-Authenticate", "FormBased");
                             response.setContentType("application/json");
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.getWriter().write("{ \"error\": \"Non autorizzato. Effettua il login.\" }");
                         })
+                        // B. Se l'utente è loggato ma NON ha i permessi (403)
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setContentType("application/json");
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -54,32 +58,32 @@ public class SecurityConfig {
                         })
                 )
 
-                // 4. GESTIONE AUTORIZZAZIONI URL (L'ordine è importante)
+                // 4. GESTIONE AUTORIZZAZIONI URL
                 .authorizeHttpRequests(auth -> auth
-                        // A. INFRASTRUTTURA (Swagger, H2, Auth) - Tutto Pubblico
+                        // A. INFRASTRUTTURA E ERRORI (MODIFICATO QUI)
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/error").permitAll() // <--- FONDAMENTALE: Lascia passare gli errori!
 
-                        // B. HACKATHON PUBBLICI (Solo Lettura)
-                        .requestMatchers(HttpMethod.GET, "/api/hackathons").permitAll()      // Lista
-                        .requestMatchers(HttpMethod.GET, "/api/hackathons/{id}").permitAll() // Dettaglio singolo (IMPORTANTE)
+                        // B. HACKATHON PUBBLICI
+                        .requestMatchers(HttpMethod.GET, "/api/hackathons").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/hackathons/{id}").permitAll()
 
-                        // C. CREAZIONE HACKATHON (Solo chi ha i permessi specifici)
+                        // C. CREAZIONE (Solo Creator/Admin)
                         .requestMatchers(HttpMethod.POST, "/api/hackathons").hasAnyAuthority("EVENT_CREATOR", "ADMIN")
 
                         // D. AMMINISTRAZIONE
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
 
-                        // E. TUTTO IL RESTO (Teams, Submission, Dashboard Staff, ecc.)
-                        // Richiede solo di essere loggati (i controlli specifici sono nei Service)
+                        // E. TUTTO IL RESTO
                         .anyRequest().authenticated()
                 )
 
-                // 5. Fix per H2 Console (altrimenti vedi pagina bianca)
+                // 5. Fix per H2 Console
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
 
-                // 6. Logout Custom
+                // 6. Logout
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/logout")
                         .invalidateHttpSession(true)
