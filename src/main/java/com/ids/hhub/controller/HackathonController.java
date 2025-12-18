@@ -113,7 +113,7 @@ public class HackathonController {
     // =================================================================================
 
     @GetMapping("/{id}/dashboard")
-    @Operation(summary = "Dashboard Staff", description = "Restituisce tutte le informazioni (incluse quelle sensibili) per lo staff dell'evento.")
+    @Operation(summary = "Dashboard Staff", description = "Restituisce tutte le informazioni (incluse quelle sensibili) per lo staff dell'evento singolo.")
     public ResponseEntity<HackathonStaffDto> getHackathonStaffInfo(
             @PathVariable Long id,
             Authentication auth
