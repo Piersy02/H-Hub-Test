@@ -48,4 +48,52 @@ public class SubmissionService {
 
         return submissionRepo.save(submission);
     }
+
+    // --- NUOVO: VISUALIZZA SOTTOMISSIONE ---
+    public Submission getSubmissionByTeamId(Long teamId, String requesterEmail) {
+        Team team = teamRepo.findById(teamId)
+                .orElseThrow(() -> new RuntimeException("Team non trovato"));
+
+        User requester = userRepo.findByEmail(requesterEmail).orElseThrow();
+
+        // Controllo: Sei membro del team?
+        if (!team.getMembers().contains(requester)) {
+            throw new SecurityException("Solo i membri del team possono vedere la propria sottomissione.");
+        }
+
+        if (team.getSubmission() == null) {
+            throw new RuntimeException("Nessuna sottomissione trovata per questo team.");
+        }
+
+        return team.getSubmission();
+    }
+
+    // --- NUOVO: CANCELLA SOTTOMISSIONE ---
+    @Transactional
+    public void deleteSubmission(Long submissionId, String requesterEmail) {
+        Submission sub = submissionRepo.findById(submissionId)
+                .orElseThrow(() -> new RuntimeException("Sottomissione non trovata"));
+
+        User requester = userRepo.findByEmail(requesterEmail).orElseThrow();
+        Team team = sub.getTeam();
+
+        // 1. Controllo: Sei membro del team?
+        if (!team.getMembers().contains(requester)) {
+            throw new SecurityException("Solo i membri del team possono cancellare la sottomissione.");
+        }
+
+        // 2. STATE PATTERN CHECK
+        // Possiamo cancellare solo se siamo ancora in ONGOING.
+        // Se siamo in EVALUATION o FINISHED, è troppo tardi.
+        // Nota: Usiamo submitProject come proxy per verificare se è permesso modificare
+        try {
+            team.getHackathon().getCurrentStateObject().submitProject(team.getHackathon(), team);
+        } catch (IllegalStateException e) {
+            throw new IllegalStateException("Impossibile ritirare il progetto: " + e.getMessage());
+        }
+
+        // 3. Cancellazione
+        team.setSubmission(null); // Rimuovi riferimento lato Team
+        submissionRepo.delete(sub); // Cancella dal DB
+    }
 }
