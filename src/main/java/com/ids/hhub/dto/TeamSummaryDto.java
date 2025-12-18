@@ -1,7 +1,8 @@
 package com.ids.hhub.dto;
 
-import lombok.Data;
 import lombok.AllArgsConstructor;
+import lombok.Data;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -10,4 +11,5 @@ public class TeamSummaryDto {
     private String teamName;
     private String leaderEmail;
     private String leaderName;
+    private List<TeamMemberDto> members;
 }

@@ -181,8 +181,7 @@ public class HackathonService {
     public List<TeamSummaryDto> getRegisteredTeams(Long hackathonId, String requesterEmail) {
         User requester = getUserByEmail(requesterEmail);
 
-        // 1. Controllo Permessi: Staff (qualsiasi ruolo) o Admin
-        // Usiamo l'helper che abbiamo creato prima
+        // 1. Controllo Permessi
         checkStaffOrAdminPermission(requester, hackathonId);
 
         // 2. Recupera l'Hackathon
@@ -192,19 +191,30 @@ public class HackathonService {
         List<TeamSummaryDto> result = new ArrayList<>();
 
         for (Team team : h.getTeams()) {
+            // Info Leader
             String leaderEmail = "N/A";
             String leaderName = "N/A";
-
             if (team.getLeader() != null) {
                 leaderEmail = team.getLeader().getEmail();
                 leaderName = team.getLeader().getName() + " " + team.getLeader().getSurname();
             }
 
+            // Info Membri (Conversione da User a TeamMemberDto)
+            List<TeamMemberDto> membersList = new ArrayList<>();
+            for (User member : team.getMembers()) {
+                membersList.add(new TeamMemberDto(
+                        member.getName() + " " + member.getSurname(),
+                        member.getEmail()
+                ));
+            }
+
+            // Creazione DTO finale
             result.add(new TeamSummaryDto(
                     team.getId(),
                     team.getName(),
                     leaderEmail,
-                    leaderName
+                    leaderName,
+                    membersList // <--- Passiamo la lista
             ));
         }
 
