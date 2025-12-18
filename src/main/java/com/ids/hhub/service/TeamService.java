@@ -5,10 +5,7 @@ import com.ids.hhub.model.Team;
 import com.ids.hhub.model.TeamInvitation;
 import com.ids.hhub.model.User;
 import com.ids.hhub.model.enums.InvitationStatus;
-import com.ids.hhub.repository.HackathonRepository;
-import com.ids.hhub.repository.TeamInvitationRepository;
-import com.ids.hhub.repository.TeamRepository;
-import com.ids.hhub.repository.UserRepository;
+import com.ids.hhub.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +19,8 @@ public class TeamService {
     @Autowired private HackathonRepository hackathonRepo;
     @Autowired private UserRepository userRepo;
     @Autowired private TeamInvitationRepository invitationRepo;
+    @Autowired private SubmissionRepository submissionRepo;
+
 
     // STEP 1: CREAZIONE DEL TEAM (Senza Hackathon)
     @Transactional
@@ -169,6 +168,103 @@ public class TeamService {
 
         // 5. Salva
         invitationRepo.save(invitation);
+    }
+
+    // --- 4. VISUALIZZA IL MIO TEAM ---
+    public Team getMyTeam(String userEmail) {
+        User user = userRepo.findByEmail(userEmail).orElseThrow();
+        if (user.getTeam() == null) {
+            throw new RuntimeException("Non fai parte di nessun team al momento.");
+        }
+        return user.getTeam();
+    }
+
+    // --- 5. ABBANDONA TEAM (Per i membri) ---
+    @Transactional
+    public void leaveTeam(String userEmail) {
+        User user = userRepo.findByEmail(userEmail).orElseThrow();
+        Team team = user.getTeam();
+
+        if (team == null) {
+            throw new RuntimeException("Non sei in nessun team.");
+        }
+
+        // Se sei il Leader, non puoi abbandonare (devi prima cancellare il team o passare la leadership)
+        // Per semplicità d'esame: Il leader scioglie il team se esce.
+        if (team.getLeader().equals(user)) {
+            deleteTeam(team.getId(), userEmail); // Richiama il metodo di cancellazione
+            return;
+        }
+
+        // Controllo Stato Hackathon (Se iscritto)
+        if (team.getHackathon() != null) {
+            // Se l'hackathon è iniziato, non si può abbandonare (o forse sì? Dipende dalle regole.
+            // Di solito si blocca per evitare cambi squadra in corsa).
+            // team.getHackathon().getCurrentStateObject().registerTeam(...) // Check opzionale
+        }
+
+        // Rimuovi
+        team.getMembers().remove(user);
+        user.setTeam(null);
+
+        userRepo.save(user);
+        teamRepo.save(team);
+    }
+
+    // --- 6. RIMUOVI MEMBRO (Solo Leader) ---
+    @Transactional
+    public void kickMember(Long teamId, Long memberId, String leaderEmail) {
+        Team team = teamRepo.findById(teamId).orElseThrow();
+        User leader = userRepo.findByEmail(leaderEmail).orElseThrow();
+
+        // Controllo Leader
+        if (!team.getLeader().equals(leader)) {
+            throw new SecurityException("Solo il Leader può espellere i membri.");
+        }
+
+        User memberToRemove = userRepo.findById(memberId).orElseThrow();
+
+        if (!team.getMembers().contains(memberToRemove)) {
+            throw new RuntimeException("L'utente non fa parte di questo team.");
+        }
+
+        if (memberToRemove.equals(leader)) {
+            throw new RuntimeException("Non puoi espellere te stesso (usa 'Abbandona' o 'Elimina Team').");
+        }
+
+        // Rimuovi
+        team.getMembers().remove(memberToRemove);
+        memberToRemove.setTeam(null);
+
+        userRepo.save(memberToRemove);
+        teamRepo.save(team);
+    }
+
+    // --- 7. ELIMINA TEAM (Solo Leader) ---
+    @Transactional
+    public void deleteTeam(Long teamId, String requesterEmail) {
+        Team team = teamRepo.findById(teamId).orElseThrow();
+        User requester = userRepo.findByEmail(requesterEmail).orElseThrow();
+
+        if (!team.getLeader().equals(requester)) {
+            throw new SecurityException("Solo il Leader può sciogliere il team.");
+        }
+
+        // Libera tutti i membri
+        for (User member : team.getMembers()) {
+            member.setTeam(null);
+            userRepo.save(member);
+        }
+
+        // Pulisci la lista per evitare errori JPA
+        team.getMembers().clear();
+
+        // Se c'è una sottomissione, va cancellata
+        if (team.getSubmission() != null) {
+            submissionRepo.delete(team.getSubmission());
+        }
+
+        teamRepo.delete(team);
     }
 
 }

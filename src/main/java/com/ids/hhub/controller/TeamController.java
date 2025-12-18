@@ -92,4 +92,42 @@ public class TeamController {
         teamService.rejectInvitation(invitationId, auth.getName());
         return ResponseEntity.ok("Invito rifiutato correttamente.");
     }
+
+    // =================================================================================
+    // SEZIONE 4: GESTIONE LIFECYCLE (Visualizza, Esci, Espelli)
+    // =================================================================================
+
+    @GetMapping("/my-team")
+    @Operation(summary = "Il mio Team", description = "Restituisce i dettagli del team di cui l'utente loggato fa parte.")
+    public ResponseEntity<Team> getMyTeam(Authentication auth) {
+        return ResponseEntity.ok(teamService.getMyTeam(auth.getName()));
+    }
+
+    @PostMapping("/leave")
+    @Operation(summary = "Abbandona Team", description = "L'utente esce dal team corrente. Se è il Leader, il team viene sciolto.")
+    public ResponseEntity<String> leaveTeam(Authentication auth) {
+        teamService.leaveTeam(auth.getName());
+        return ResponseEntity.ok("Hai abbandonato il team con successo.");
+    }
+
+    @DeleteMapping("/{teamId}/members/{memberId}")
+    @Operation(summary = "Espelli Membro (Kick)", description = "Il Leader rimuove forzatamente un membro dal team.")
+    public ResponseEntity<String> kickMember(
+            @PathVariable Long teamId,
+            @PathVariable Long memberId,
+            Authentication auth
+    ) {
+        teamService.kickMember(teamId, memberId, auth.getName());
+        return ResponseEntity.ok("Membro rimosso dal team.");
+    }
+
+    @DeleteMapping("/{teamId}")
+    @Operation(summary = "Sciogli Team", description = "Il Leader elimina definitivamente il team.")
+    public ResponseEntity<String> deleteTeam(
+            @PathVariable Long teamId,
+            Authentication auth
+    ) {
+        teamService.deleteTeam(teamId, auth.getName());
+        return ResponseEntity.ok("Team sciolto con successo.");
+    }
 }
