@@ -190,7 +190,7 @@ public class TeamService {
         }
 
         // Se sei il Leader, non puoi abbandonare (devi prima cancellare il team o passare la leadership)
-        // Per semplicità d'esame: Il leader scioglie il team se esce.
+        // Per semplicità Il leader scioglie il team se esce.
         if (team.getLeader().equals(user)) {
             deleteTeam(team.getId(), userEmail); // Richiama il metodo di cancellazione
             return;
