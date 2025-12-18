@@ -40,8 +40,7 @@ public class SecurityConfig {
                 // 2. Abilita Basic Auth (per Swagger/Postman)
                 .httpBasic(withDefaults())
 
-                // 3. GESTIONE ECCEZIONI
-                // Questo impedisce il redirect HTML e forza una risposta JSON/Testo
+                // 3. GESTIONE ECCEZIONI (Risposte JSON invece di HTML o redirect)
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setContentType("application/json");
@@ -55,23 +54,29 @@ public class SecurityConfig {
                         })
                 )
 
-                // 4. Gestione URL
+                // 4. GESTIONE AUTORIZZAZIONI URL (L'ordine è importante!)
                 .authorizeHttpRequests(auth -> auth
+                        // A. INFRASTRUTTURA (Swagger, H2, Auth) - Tutto Pubblico
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/hackathons").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN") // Solo EVENT_CREATOR e ADMIN possono fare POST su /api/hackathons
-                        .requestMatchers(HttpMethod.POST, "/api/hackathons").hasAnyAuthority("EVENT_CREATOR", "ADMIN")
-                        .requestMatchers("/api/mentor/**").authenticated()
-                        .requestMatchers("/api/teams/**").authenticated()
-                        .requestMatchers("/api/submissions/**").authenticated()
-                        .requestMatchers("/api/evaluations/**").authenticated()
+                        .requestMatchers("/h2-console/**").permitAll()
 
+                        // B. HACKATHON PUBBLICI (Solo Lettura)
+                        .requestMatchers(HttpMethod.GET, "/api/hackathons").permitAll()      // Lista
+                        .requestMatchers(HttpMethod.GET, "/api/hackathons/{id}").permitAll() // Dettaglio singolo (IMPORTANTE)
+
+                        // C. CREAZIONE HACKATHON (Solo chi ha i permessi specifici)
+                        .requestMatchers(HttpMethod.POST, "/api/hackathons").hasAnyAuthority("EVENT_CREATOR", "ADMIN")
+
+                        // D. AMMINISTRAZIONE
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+
+                        // E. TUTTO IL RESTO (Teams, Submission, Dashboard Staff, ecc.)
+                        // Richiede solo di essere loggati (i controlli specifici sono nei Service)
                         .anyRequest().authenticated()
                 )
 
-                // 5. Fix per H2 Console
+                // 5. Fix per H2 Console (altrimenti vedi pagina bianca)
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
 
                 // 6. Logout Custom
@@ -81,7 +86,7 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                         .logoutSuccessHandler((request, response, authentication) -> {
                             response.setStatus(HttpServletResponse.SC_OK);
-                            response.getWriter().write("Logout effettuato!");
+                            response.getWriter().write("Logout effettuato con successo!");
                         })
                 );
 
