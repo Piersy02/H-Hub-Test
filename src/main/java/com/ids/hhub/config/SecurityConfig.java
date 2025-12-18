@@ -54,7 +54,7 @@ public class SecurityConfig {
                         })
                 )
 
-                // 4. GESTIONE AUTORIZZAZIONI URL (L'ordine è importante!)
+                // 4. GESTIONE AUTORIZZAZIONI URL (L'ordine è importante)
                 .authorizeHttpRequests(auth -> auth
                         // A. INFRASTRUTTURA (Swagger, H2, Auth) - Tutto Pubblico
                         .requestMatchers("/api/auth/**").permitAll()
