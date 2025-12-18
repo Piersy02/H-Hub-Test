@@ -121,6 +121,15 @@ public class HackathonController {
         return ResponseEntity.ok(hackathonService.getHackathonStaffDetails(id, auth.getName()));
     }
 
+    @GetMapping("/{id}/teams")
+    @Operation(summary = "Lista Team Iscritti (Staff)", description = "Restituisce la lista dei team con email del leader. Accessibile solo allo Staff dell'evento o Admin.")
+    public ResponseEntity<List<TeamSummaryDto>> getRegisteredTeams(
+            @PathVariable Long id,
+            Authentication auth
+    ) {
+        return ResponseEntity.ok(hackathonService.getRegisteredTeams(id, auth.getName()));
+    }
+
     @GetMapping("/staff/me")
     @Operation(summary = "I miei eventi Staff", description = "Restituisce la lista degli hackathon in cui l'utente loggato ha un ruolo di staff.")
     public ResponseEntity<List<HackathonStaffDto>> getMyWorkingEvents(Authentication auth) {

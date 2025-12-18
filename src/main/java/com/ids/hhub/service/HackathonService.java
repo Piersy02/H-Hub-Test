@@ -1,9 +1,6 @@
 package com.ids.hhub.service;
 
-import com.ids.hhub.dto.AddStaffDto;
-import com.ids.hhub.dto.CreateHackathonDto;
-import com.ids.hhub.dto.HackathonPublicDto;
-import com.ids.hhub.dto.HackathonStaffDto;
+import com.ids.hhub.dto.*;
 import com.ids.hhub.model.*;
 import com.ids.hhub.model.enums.HackathonStatus;
 import com.ids.hhub.model.enums.PlatformRole;
@@ -178,6 +175,40 @@ public class HackathonService {
             }
         }
         return submissions;
+    }
+
+    // --- 8. LISTA TEAM ISCRITTI (Riservata Staff/Admin) ---
+    public List<TeamSummaryDto> getRegisteredTeams(Long hackathonId, String requesterEmail) {
+        User requester = getUserByEmail(requesterEmail);
+
+        // 1. Controllo Permessi: Staff (qualsiasi ruolo) o Admin
+        // Usiamo l'helper che abbiamo creato prima
+        checkStaffOrAdminPermission(requester, hackathonId);
+
+        // 2. Recupera l'Hackathon
+        Hackathon h = getHackathonById(hackathonId);
+
+        // 3. Mappatura Entity -> DTO
+        List<TeamSummaryDto> result = new ArrayList<>();
+
+        for (Team team : h.getTeams()) {
+            String leaderEmail = "N/A";
+            String leaderName = "N/A";
+
+            if (team.getLeader() != null) {
+                leaderEmail = team.getLeader().getEmail();
+                leaderName = team.getLeader().getName() + " " + team.getLeader().getSurname();
+            }
+
+            result.add(new TeamSummaryDto(
+                    team.getId(),
+                    team.getName(),
+                    leaderEmail,
+                    leaderName
+            ));
+        }
+
+        return result;
     }
 
     // METODI HELPER PRIVATI
