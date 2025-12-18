@@ -11,8 +11,7 @@ import java.time.LocalDateTime;
 @Service
 public class SubmissionService {
 
-    @Autowired
-    private SubmissionRepository submissionRepo; // Crealo (estende JpaRepository)
+    @Autowired private SubmissionRepository submissionRepo;
     @Autowired private TeamRepository teamRepo;
     @Autowired private UserRepository userRepo;
 
