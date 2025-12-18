@@ -34,7 +34,7 @@ public class HackathonController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Dettaglio pubblico Hackathon", description = "Restituisce le informazioni pubbliche (locandina) di un singolo hackathon.")
+    @Operation(summary = "Dettaglio pubblico Hackathon", description = "Restituisce le informazioni pubbliche di un singolo hackathon.")
     public ResponseEntity<HackathonPublicDto> getHackathonPublicInfo(@PathVariable Long id) {
         return ResponseEntity.ok(hackathonService.getHackathonPublicDetails(id));
     }
@@ -68,7 +68,7 @@ public class HackathonController {
     }
 
     @PatchMapping("/{id}/status")
-    @Operation(summary = "Cambia Stato", description = "Modifica lo stato dell'Hackathon (es. da REGISTRATION_OPEN a ONGOING).")
+    @Operation(summary = "Cambia Stato", description = "Modifica lo stato dell'Hackathon.")
     public ResponseEntity<String> changeStatus(
             @PathVariable Long id,
             @RequestBody ChangeStatusDto dto,
@@ -89,7 +89,7 @@ public class HackathonController {
     }
 
     @PostMapping("/{hackathonId}/teams/{teamId}/disqualify")
-    @Operation(summary = "Squalifica Team", description = "Rimuove forzatamente un team dall'hackathon (es. per violazione regolamento).")
+    @Operation(summary = "Squalifica Team", description = "Rimuove forzatamente un team dall'hackathon.")
     public ResponseEntity<String> disqualifyTeam(
             @PathVariable Long hackathonId,
             @PathVariable Long teamId,
@@ -128,7 +128,7 @@ public class HackathonController {
     }
 
     @GetMapping("/{id}/submissions")
-    @Operation(summary = "Visualizza Sottomissioni", description = "Permette a Giudici e Organizzatori di vedere i progetti consegnati dai team.")
+    @Operation(summary = "Visualizza Sottomissioni", description = "Permette ai membri dello staff di vedere i progetti consegnati dai team.")
     public ResponseEntity<List<Submission>> getSubmissionsForJudge(
             @PathVariable Long id,
             Authentication auth
