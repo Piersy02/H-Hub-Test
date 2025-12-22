@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.ids</groupId>
-	<artifactId>H-Hub</artifactId>
+	<artifactId>H-Hub-Test</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>H-Hub</name>
 	<description>H-Hub</description>
